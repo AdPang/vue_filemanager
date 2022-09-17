@@ -84,7 +84,6 @@ export default {
     },
     async getMenuList () {
       const {data:res} = await this.$http.get('menu/get')
-      console.log(res.result);
       if (res.status !== true) return this.$message.error(res.meta.data.msg)
       this.menulist = res.result
     },
@@ -94,7 +93,6 @@ export default {
     },
     // 保存链接的激活状态
     saveNavState (activePath) {
-      console.log(activePath);
       window.sessionStorage.setItem('activePath', activePath)
       this.activePath = activePath
     }

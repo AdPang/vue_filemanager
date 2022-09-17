@@ -5,6 +5,7 @@ import './plugins/element.js'
 // 导入全局样式表
 import './assets/css/global.css'
 import axios from 'axios'
+import 'default-passive-events'
 
 Vue.config.productionTip = false
 axios.defaults.baseURL = 'http://10.203.70.215:5006/api/'

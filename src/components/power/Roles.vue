@@ -68,11 +68,8 @@
 
         <el-dialog title="添加角色" :visible.sync="addRoleDialogVisible" width="40%" @close="addRoleDialogClosed">
             <el-form :model="addRoleForm" :rules="RoleFormRules" ref="addRoleFormRef" label-width="100px">
-            <el-form-item label="角色名称" prop="roleName">
-              <el-input v-model="addRoleForm.roleName"></el-input>
-            </el-form-item>
-            <el-form-item label="角色描述" prop="roleDesc">
-              <el-input v-model="addRoleForm.roleDesc"></el-input>
+            <el-form-item label="角色名称" prop="name">
+              <el-input v-model="addRoleForm.name"></el-input>
             </el-form-item>
           </el-form>
             <span slot="footer" class="dialog-footer">
@@ -107,8 +104,8 @@ export default {
       rightslist: [],
       // 树形控件的属性绑定对象
       treeProps: {
-        label: 'authName',
-        children: 'children'
+        label: 'menuName',
+        children: 'childrenMenu'
       },
       // 默认选中的节点Id值
       defKeys: [],
@@ -118,16 +115,12 @@ export default {
       addRoleDialogVisible: false,
       // 添加角色表单数据
       addRoleForm: {
-        roleName: '',
-        roleDesc: ''
+        name: ''
       },
       // 角色表单规则
       RoleFormRules: {
-        roleName: [
+        name: [
           { required: true, message: '请输入角色名称', trigger: 'blur' }
-        ],
-        roleDesc: [
-          // { required: true, message: '请输入角色描述', trigger: 'blur' }
         ]
       },
       // 控制修改角色对话框的显示与隐藏标志位
@@ -168,22 +161,29 @@ export default {
     async showSetRightDialog (role) {
       this.roleId = role.id
       // 获取所有权限的数据
-      const { data: res } = await this.$http.get('rights/tree')
-      if (res.meta.status !== 200) return this.$message.error('获取权限数据失败')
+      const { data: result } = await this.$http.get('menu/tree/admin')
+      if (result.status !== true) return this.$message.error('获取权限数据失败')
       // 把获取到的权限数据保存到data中
-      this.rightslist = res.data
+      this.rightslist = result.result
       // 递归获取三级节点的Id
-      this.getLeafKeys(role, this.defKeys)
+      console.log(role.menus);
+      this.getLeafKeys(role.menus, this.defKeys)
+
       this.setRightDialogVisible = true
     },
     // 通过递归的形式，获取角色下所有的三级权限的id，保存到defKeys数组中
-    getLeafKeys (node, arr) {
-      if (!node.children) {
-        // 如果node节点不包含children属性，则是三级节点
-        return arr.push(node.id)
+    getLeafKeys (nodes, arr) {
+      for(let i = 0; i < nodes.length; i++) {
+        if(nodes[i].menuLevel === 2){
+          console.log(nodes[i].menuName);
+            
+          arr.push(nodes[i].id)
+        }
+        if(nodes[i].childrenMenu.length > 0){
+          this.getLeafKeys(nodes[i].childrenMenu,arr)
+        }
+        
       }
-      node.children.forEach(item =>
-        this.getLeafKeys(item, arr))
     },
     // 监听分配权限对话框的关闭事件
     setRightDialogClosed () {
@@ -193,11 +193,10 @@ export default {
     async allotRights () {
       const keys = [
         ...this.$refs.treeRef.getCheckedKeys(),
-        ...this.$refs.treeRef.getHalfCheckedKeys()
+        //...this.$refs.treeRef.getHalfCheckedKeys()
       ]
-      const idStr = keys.join(',')
-      const { data: res } = await this.$http.post(`roles/${this.roleId}/rights`, { rids: idStr })
-      if (res.meta.status !== 200) return this.$message.error('分配权限失败！')
+      const { data: result } = await this.$http.put(`menu/edit/${this.roleId}/admin`, keys)
+      if (!result.status) return this.$message.error('分配权限失败！')
       this.$message.success('分配权限成功！')
       this.getRolesList()
       this.setRightDialogVisible = false
@@ -211,9 +210,9 @@ export default {
       this.$refs.addRoleFormRef.validate(async valid => {
         if (!valid) return
         // 可以添加角色的网络请求
-        const { data: res } = await this.$http.post('roles', this.addRoleForm)
-        if (res.meta.status !== 201) return this.$message.error(res.meta.msg)
-        this.$message.success(res.meta.msg)
+        const { data: result } = await this.$http.post('roleManage/add/admin', this.addRoleForm)
+        if (!result.status) return this.$message.error(result.message)
+        this.$message.success('添加成功！')
         this.addRoleDialogVisible = false
         this.getRolesList()
       })
@@ -254,9 +253,9 @@ export default {
       }).catch(err => err)
       if (confirmResult !== 'confirm') return this.$message.info('取消了删除！')
 
-      const { data: res } = await this.$http.delete('roles/' + roleId)
-      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
-      this.$message.success(res.meta.msg)
+      const { data: result } = await this.$http.delete(`RoleManage/Delete/`+roleId+`/admin`)
+      if (!result.status) return this.$message.error(result.message)
+      this.$message.success('删除成功')
       this.getRolesList()
     }
 
