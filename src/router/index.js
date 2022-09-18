@@ -4,6 +4,7 @@ import Login from '../components/Login.vue'
 import Home from '../components/Home.vue'
 import Roles from '../components/power/Roles.vue'
 import Welcome from '../components/Welcome.vue'
+import Menus from '../components/power/Menus.vue'
 
 Vue.use(Router)
 
@@ -15,8 +16,9 @@ const routes = [
     component: Home,
     redirect: '/welcome',
     children: [
-      {path :'/welcome',component:Welcome},
+      { path: '/welcome', component: Welcome },
       { path: '/roles', component: Roles },
+      { path: '/menus', component: Menus },
     ]
   }
 ]
@@ -28,7 +30,7 @@ const router = new Router({
 })
 
 const originalPush = Router.prototype.push
-Router.prototype.push = function push (location, onResolve, onReject) {
+Router.prototype.push = function push(location, onResolve, onReject) {
   if (onResolve || onReject) return originalPush.call(this, location, onResolve, onReject)
   return originalPush.call(this, location).catch(err => err)
 }
