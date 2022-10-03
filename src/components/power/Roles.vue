@@ -143,19 +143,20 @@ export default {
       this.roleList = result.result.items
     },
     // 根据Id删除对应的权限
-    async removeRightById (role, rightId) {
+    async removeRightById (role, menuId) {
       // 弹框提示用户是否删除用户
-      const confirmResult = await this.$confirm('此操作将永久删除该用户, 是否继续?', '提示', {
+      const confirmResult = await this.$confirm('此操作将永久删除该权限, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).catch(err => err)
       if (confirmResult !== 'confirm') return this.$message.info('取消了删除！')
 
-      const { data: res } = await this.$http.delete(`roles/${role.id}/rights/${rightId}`)
-      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
-      this.$message.success(res.meta.msg)
-      role.children = res.data
+
+      const { data: result } = await this.$http.delete(`roleManage/delete/${role.id}/${menuId}/admin`)
+      if (!result.status) return this.$message.error(result.message)
+      this.$message.success("删除成功！")
+      await this.getRolesList()
     },
     // 展示分配权限的对话框
     async showSetRightDialog (role) {
