@@ -6,21 +6,47 @@ import Roles from '../components/power/Roles.vue'
 import Welcome from '../components/Welcome.vue'
 import Menus from '../components/power/Menus.vue'
 import Users from '../components/user/Users.vue'
+import File from '../components/cloud/file.vue'
+import Share from '../components/cloud/share.vue'
 
 Vue.use(Router)
 
-const routes = [
-  { path: '/', redirect: '/login' },
-  { path: '/login', component: Login },
+const routes = [{
+    path: '/',
+    redirect: '/login'
+  },
+  {
+    path: '/login',
+    component: Login
+  },
   {
     path: '/home',
     component: Home,
     redirect: '/welcome',
-    children: [
-      { path: '/welcome', component: Welcome },
-      { path: '/roles', component: Roles },
-      { path: '/menus', component: Menus },
-      {path:'/users',component:Users}
+    children: [{
+        path: '/welcome',
+        component: Welcome
+      },
+      {
+        path: '/roles',
+        component: Roles
+      },
+      {
+        path: '/menus',
+        component: Menus
+      },
+      {
+        path: '/users',
+        component: Users
+      },
+      {
+        path: '/file',
+        component: File
+      },
+      {
+        path: '/share',
+        component: Share
+      }
     ]
   }
 ]

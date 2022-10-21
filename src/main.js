@@ -8,7 +8,7 @@ import axios from 'axios'
 import 'default-passive-events'
 
 Vue.config.productionTip = false
-axios.defaults.baseURL = 'http://10.203.70.215:5006/api/'
+axios.defaults.baseURL = 'http://192.168.31.101:5006/api/'
 
 axios.interceptors.request.use(config => {
   config.headers.Authorization = window.sessionStorage.getItem('token')
