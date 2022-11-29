@@ -8,6 +8,11 @@ import Menus from '../components/power/Menus.vue'
 import Users from '../components/user/Users.vue'
 import File from '../components/cloud/file.vue'
 import Share from '../components/cloud/share.vue'
+import Client from '../components/client/ClientDownload.vue'
+import LocalFile from '../components/local/LocalFile.vue'
+import Disk from '../components/local/Disk.vue'
+import AccountManage from '../components/personcenter/AccountManage.vue';
+import PersonInfoManage from '../components/personcenter/PersonInfoManage.vue';
 
 Vue.use(Router)
 
@@ -46,9 +51,29 @@ const routes = [{
       {
         path: '/share',
         component: Share
+      },
+      { 
+        path: '/clientDownload',
+        component: Client
+      },
+      {
+        path: '/localFile',
+        component: LocalFile
+      },
+      {
+        path: '/disk',
+        component: Disk
+      },
+      {
+        path: '/infoManage',
+        component: PersonInfoManage
+      },
+      {
+        path: '/account',
+        component: AccountManage
       }
     ]
-  }
+  },
 ]
 
 

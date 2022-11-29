@@ -1,6 +1,8 @@
 <template>
   <div>
-    <h1>未完待续</h1>
+    <h1>
+    暂未集成个人中心哟
+    </h1>
   </div>
 </template>
 

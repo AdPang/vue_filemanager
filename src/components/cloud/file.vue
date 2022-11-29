@@ -22,28 +22,106 @@
           >
           </el-tree>
         </div>
-
         <div class="fileList">
-          <el-table>
+          <el-button icon="el-icon-top" circle @click="gotoPartentDir"></el-button>
+          <el-button type="primary" @click="newDirDialogVisible = true">新建文件夹</el-button>
+          <!-- <el-button type="primary">上传<i class="el-icon-upload el-icon--right"></i></el-button> -->
+          <!-- <el-button type="danger" icon="el-icon-delete">删除选中项</el-button> -->
+          <el-table :data="fileList" ref="multipleTable"
+            @row-dblclick="tableDoubleClick"
+            tooltip-effect="dark"
+            height="700"
+            style="width: 100%"
+            @selection-change="handleSelectionChange"
+            >
+            <el-table-column
+              type="selection"
+              width="55">
+            </el-table-column>
+            <el-table-column label="文件名">
+              <template slot-scope="scope">
+                <span v-if="scope.row.dirName === undefined">
+                  {{ scope.row.fileName }}
+                </span>
+                <span v-else>
+                  {{ scope.row.dirName }}
+                </span>
+                <!-- <i class="el-icon-edit-outline el-icon--right" style="cursor:pointer ;" @click="reName(scope.row)" data-toggle="tooltip" title="重命名"></i> -->
+              </template>
+            </el-table-column>
+            <el-table-column label="文件类型">
+              <template slot-scope="scope">
+                <span v-if="scope.row.realFileInfo !== undefined">
+                  {{scope.row.realFileInfo.fileType}}
+                </span>
+                <span v-else>
+                  文件夹
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column label="文件大小">
+              <template slot-scope="scope">
+                <span v-if="scope.row.realFileInfo !== undefined">
+                  {{scope.row.realFileInfo.fileLength}}
+                </span>
+              </template>
+            </el-table-column>
+            
             
           </el-table>
         </div>
       </div>
       
     </el-card>
+
+
+    <el-dialog :title="'新建文件夹'" width="40%" @close="newDirDialogClosed" :visible.sync="newDirDialogVisible">
+      <el-form :model="newDirForm" :rules="dirFormRules" ref="newDirFormRef" label-width="100px">
+        <el-form-item label="文件夹名" prop="dirName">
+          <el-input v-model="newDirForm.dirName"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="newDirDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="newDirSave">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 export default {
   data() {
+    var validateDirname = (rule, value, callback) => {
+        let re = /[\\\/\"\|\<\>\:\?\*]/
+        if (re.test(value)) {
+          callback(new Error('文件名不允许出现"\\、\/、\"、<、>、|、?、*"这些字符'));
+        } else {
+          callback();
+        }
+      };
     return {
       dataList: [],
       defaultProps: {
         label: 'dirName',
         children: 'childrenDirInfo'
       },
-      fileList: []
+      fileList: [],
+      multipleFileSelection: [],
+      currentShowDirInfo: {},
+      newDirDialogVisible: false,
+      newDirForm: {
+        dirName: ''
+      },
+      reNameDirDialogVisible: false,
+      reNameDirForm: {},
+      dirFormRules: {
+        dirName: [
+          { required: true, message: "请输入文件夹名", trigger: "blur" },
+          { validator: validateDirname, trigger: 'blur' }
+        ],
+      },
+      
     }
   },
   created() {
@@ -63,15 +141,74 @@ export default {
     },
     async fileListChange(info,node,component){
       this.fileList = [];
-      const {data: result} = info.parentDirInfoId===null ? await this.$http.get('dirinfo/GetDir/') : await this.$http.get('dirinfo/GetDir?dirId=' + info.id);
-      
-      for(var item of result.result.childrenFileInfo){
-        this.fileList.push(item)
-      }
+      const {data: result} = !info||info.parentDirInfoId===null||!info.parentDirInfoId ? await this.$http.get('dirinfo/GetDir/') : await this.$http.get('dirinfo/GetDir?dirId=' + info.id);
+
       for(var item of result.result.childrenDirInfo){
         this.fileList.push(item)
       }
-      console.log(this.fileList);
+      for(var item of result.result.childrenFileInfo){
+        this.fileList.push(item)
+      }
+      
+      this.currentShowDirInfo = info;
+    },
+    handleSelectionChange(val) {
+      this.multipleFileSelection = val;
+    },
+    reName(row){
+      console.log(row);
+    },
+    tableDoubleClick(row){
+      if(row.realFileInfo === undefined)
+        this.fileListChange(row,null,null);
+    },
+    gotoPartentDir(){
+      if(this.currentShowDirInfo.parentDirInfoId!==undefined && this.currentShowDirInfo.parentDirInfoId!== null){
+        // console.log(this.currentShowDirInfo.id);
+        // console.log(this.dataList);
+        let node = this.findNode(this.dataList[0],this.currentShowDirInfo.parentDirInfoId);
+        console.log(node);
+        this.fileListChange(node,null,null);
+      }
+    },
+    findNode(root,nodeId){
+      if(root === null) return null;
+      if(root.id == nodeId) return root;
+      else if(root.childrenDirInfo !== null && root.childrenDirInfo.length>0){
+        let result = null;
+        
+        for(var item of root.childrenDirInfo){
+          if(result !== null) break;
+          result = this.findNode(item,nodeId);
+        }
+        return result;
+      }
+      return null;
+    },
+    newDirSave(){
+      this.$refs.newDirFormRef.validate(async valid => {
+        if (!valid) return;
+        if(this.currentShowDirInfo.parentDirInfoId===null){
+          const {data: result} = await this.$http.post('dirInfo/add',{dirName:this.newDirForm.dirName})
+          if(!result.status){
+            return this.$message.error(result.message)
+          }
+          this.$message.success("创建文件夹成功！")
+          this.getCloudDirInfo();
+        }else{
+          const {data: result} =this.$http.post('dirInfo/add',{dirName:this.newDirForm.dirName,parentDirInfoId:this.currentShowDirInfo.id})
+          if(!result.status){
+            return this.$message.error("创建文件夹成功！")
+          }
+          this.$message.success(result.message)
+          this.getCloudDirInfo();
+        }
+        this.newDirDialogVisible = false;
+      })
+      
+    },
+    newDirDialogClosed(){
+      this.$refs.newDirFormRef.resetFields();
     }
   },
 };
@@ -92,6 +229,7 @@ export default {
 }
 .mytree /deep/ {
   width: 15%;
+  padding: 10px;
   float: left;
   overflow: hidden;
   .el-tree > .el-tree-node:after {
